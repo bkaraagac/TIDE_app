@@ -21,10 +21,8 @@ def truncate_to_token_limit(text: str, max_tokens: int) -> str:
     tokens = encoding.encode(text)
     return encoding.decode(tokens[:max_tokens])
 
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
-client = openai.OpenAI()
-
+def get_client(api_key: str):
+    return openai.OpenAI(api_key=api_key)
 
 def clean_json_response(content):
     """Clean the response to extract only the JSON part"""
@@ -40,39 +38,38 @@ def clean_json_response(content):
         return content[start:end]
     return content
 
-def extract_info(text):
+def extract_info(text, client):
     system_message = """You are a research assistant specialized in extracting structured data from academic theses and reports.
 Extract only information that is explicitly stated in the provided text.
 Do not make assumptions or generate information that is not present.
 Your response must be ONLY a valid JSON object matching the specified schema - no explanatory text, no markdown formatting, no code blocks.
 If a field is not mentioned in the text, return the value "not present" for that field.
-Respond in English even when the input is in another language."""
+Always answer in the same language as the original text."""
 
     # ✅ Truncate the document text to avoid exceeding token limits
     truncated_text = truncate_to_token_limit(text, MAX_INPUT_TOKENS)
 
     prompt = f"""From the attached thesis or report, extract the following structured information as a JSON object:
 
-{{
-  "title": "the title of the thesis or report",
-  "keywords": "the keywords of the thesis or report, such as the main variables or constructs studied",
-  "research_goal": "objective or aim of the study or project",
-  "research_question": "explicitly stated research question(s)",
-  "hypotheses": "list of hypotheses if mentioned",
-  "methodology": "briefly describe the methodology used in this study or project. Include relevant details such as whether it was empirical or theoretical, whether fieldwork was conducted, the type of analysis (e.g. qualitative, quantitative, mixed methods), and any specific methods mentioned (e.g. case study, experiment, survey, content analysis, etc.). Keep the description concise.",
-  "findings_summary": "summarize whether findings matched expectations or the research/project aim was achieved",
-  "future_research_suggestions": "suggestions made by the author for future research, typically found in the conclusion or discussion section",
-  "author": "name of the thesis author",
-  "supervisor": "name(s) of the thesis supervisor(s)",
-  "study_programme": "name of the study programme or department",
-  "submission_date": "date when the thesis was submitted",
-  "organisation": "in the case of collaboration with external organisation(s), the name of the these organisation(s)"
-}}
+    {{
+    "Title": "title of the thesis or report",
+    "Keywords": "keywords of the thesis or report, such as the main variables or constructs studied",
+    "Research_Goal": "objective or aim of the study or project",
+    "Research_Question": "explicitly stated research question(s)",
+    "Hypotheses": "list of hypotheses if mentioned",
+    "Methodology": "brief description of the methodology used in this study or project. Includes relevant details such as whether it was empirical or theoretical, whether fieldwork was conducted, the type of analysis (e.g. qualitative, quantitative, mixed methods), and any specific methods mentioned (e.g. case study, experiment, survey, content analysis, etc.). Keep the description concise.",
+    "Findings_Summary": "summary of findings, including whether they matched expectations or if the research/project aim was achieved",
+    "Future_Research_Suggestions": "explicit suggestion(s) made by the author for future research, follow-up studies, or new areas of inquiry, usually found spread throughout the discussion or conclusion sections. Each suggestion should be listed separately and exactly as given. Do not merge or summarize multiple suggestions into one.",
+    "Organisation": "in the case of collaboration with external organisation(s), the name of these organisation(s)",
+    "Author": "name of the thesis author",
+    "Supervisor": "name(s) of the thesis supervisor(s) and co-assessor(s)",
+    "Study_Programme": "name of the study programme or department",
+    "Submission_date": "the thesis submission date in the format MM-YYYY (e.g., '06-2018' for June 2018, '03-2019' for March 2019). Ignores specific days even if provided. Uses English month numbers (01-12)."
+    }}
 
 Document text:
 {truncated_text}
 """
-
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
