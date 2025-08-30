@@ -1,4 +1,4 @@
-import openai
+from openai import OpenAI  # <-- NEW: v1 SDK import (keep this)
 import os
 import json
 import re
@@ -7,11 +7,14 @@ import tiktoken
 # Constants
 MODEL = "gpt-4o-mini"
 MAX_TOKENS = 128000
-RESERVED_TOKENS = 4000  # Tokens reserved for system message + prompt + output
+RESERVED_TOKENS = 4000
 MAX_INPUT_TOKENS = MAX_TOKENS - RESERVED_TOKENS
 
-# Tokenizer for counting
-encoding = tiktoken.encoding_for_model(MODEL)
+# Tokenizer (safe fallback)
+try:
+    encoding = tiktoken.encoding_for_model(MODEL)
+except Exception:
+    encoding = tiktoken.get_encoding("cl100k_base")
 
 def count_tokens(text: str) -> int:
     return len(encoding.encode(text))
@@ -20,19 +23,15 @@ def truncate_to_token_limit(text: str, max_tokens: int) -> str:
     tokens = encoding.encode(text)
     return encoding.decode(tokens[:max_tokens])
 
-def get_client(api_key: str) -> OpenAI:
-    return OpenAI(api_key=api_key)
+def get_client(api_key: str) -> OpenAI:   # <-- keep signature the same
+    return OpenAI(api_key=api_key)        # <-- minimal fix
 
 def clean_json_response(content):
-    """Clean the response to extract only the JSON part"""
-    # Remove markdown code blocks if present
+    # (your existing clean-up code)
     content = re.sub(r'```json\s*', '', content)
     content = re.sub(r'```\s*$', '', content)
-
-    # Find the JSON object (starts with { and ends with })
     start = content.find('{')
     end = content.rfind('}') + 1
-
     if start != -1 and end != -1:
         return content[start:end]
     return content
