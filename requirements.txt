@@ -4,3 +4,4 @@ openai
 tiktoken
 PyMuPDF
 python-dateutil
+dateparser
