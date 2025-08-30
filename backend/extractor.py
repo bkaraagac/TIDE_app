@@ -1,6 +1,5 @@
 import openai
 import os
-from dotenv import load_dotenv
 import json
 import re
 import tiktoken
@@ -21,8 +20,8 @@ def truncate_to_token_limit(text: str, max_tokens: int) -> str:
     tokens = encoding.encode(text)
     return encoding.decode(tokens[:max_tokens])
 
-def get_client(api_key: str):
-    return openai.OpenAI(api_key=api_key)
+def get_client(api_key: str) -> OpenAI:
+    return OpenAI(api_key=api_key)
 
 def clean_json_response(content):
     """Clean the response to extract only the JSON part"""
