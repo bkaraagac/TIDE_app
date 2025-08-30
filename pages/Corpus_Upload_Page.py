@@ -26,6 +26,9 @@ st.session_state.api_key = st.text_input(
     help="Your key is kept only in this session."
 )
 
+# get client
+client = get_client(st.session_state.api_key)
+
 # Stop rendering the rest of the page until a key is present
 if not st.session_state.api_key:
     st.info("Enter your API key to continue to the upload step.")
