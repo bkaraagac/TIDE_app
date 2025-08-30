@@ -14,15 +14,24 @@ FIELDS = []  # keep as-is if you set column order later
 st.title("🗂️ Upload Thesis Corpus (ZIP)")
 st.caption("💸 *Estimated cost per 100 theses is approximately $0.50 (as of June 2025)*")
 
-# Get API key (prefer secrets/env; otherwise text input)
-api_key = get_api_key()
-if not api_key:
-    api_key = st.text_input("🔑 Enter your OpenAI API key", type="password")
-if not api_key:
-    st.warning("Please enter your OpenAI API key to continue.")
-    st.stop()
+# -------- API key gate (must come before the uploader) --------
+if "api_key" not in st.session_state:
+    st.session_state.api_key = ""
 
-client = get_client(api_key)
+st.subheader("Step 1 — Enter your OpenAI API key")
+st.session_state.api_key = st.text_input(
+    "🔑 OpenAI API key",
+    type="password",
+    value=st.session_state.api_key,
+    help="Your key is kept only in this session."
+)
+
+# Stop rendering the rest of the page until a key is present
+if not st.session_state.api_key:
+    st.info("Enter your API key to continue to the upload step.")
+    st.stop()
+# ---------------------------------------------------------------
+
 
 # Upload ZIP file
 uploaded_zip = st.file_uploader("Upload a ZIP file containing thesis PDFs", type="zip")
