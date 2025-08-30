@@ -6,7 +6,9 @@ st.set_page_config(page_title="TIDE", layout="centered")
 col1, col2 = st.columns([1, 4])  # Adjust width ratio as needed
 
 with col1:
-    st.image("C:/Users/karaa/OneDrive - UvA/thesis/TIDE/tide_app/assets", width=100)
+    from pathlib import Path
+    from config import ASSETS  # see next section
+    st.image(str(ASSETS / "image2vector.svg"), width=100)
 
 with col2:
     st.markdown("## TIDE: Thesis Inspiration Discovery Engine")
